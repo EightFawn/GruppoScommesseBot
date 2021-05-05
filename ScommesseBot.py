@@ -65,13 +65,7 @@ def codiceFunc():
 
     return counter
 
-
-def SaveJson(fileName, dictName):
-    with open(fileName, 'w') as fp:
-        json.dump(dictName, fp, sort_keys=True, indent=4)
-
-
-def giocatoreRandom(utente: object, chatId: int):
+def giocatoreRandom(utente, chatId: int):
     flag = True
     while flag:
         try:
@@ -98,7 +92,7 @@ def isUtente(utenteID: int):
         return False
 
 
-def settaUtente(utente: int, invitatoDa=None):
+def settaUtente(utente, invitatoDa=None):
     if not isUtente(utente.id):
         if invitatoDa != None:
             invitatoDa = Utente.select().where(id == invitatoDa).get()
@@ -109,7 +103,7 @@ def settaUtente(utente: int, invitatoDa=None):
         return Utente.update(username=utente.username).where(Utente.id == utente.id).execute()
 
 
-def settaScommessa(utente: object, tipoScommessa: str, risultato=None):
+def settaScommessa(utente, tipoScommessa: str, risultato=None):
     settaUtente(utente)
     Scommessa.create(utente=utente.id, tipo=tipoScommessa, risultato=risultato)
 

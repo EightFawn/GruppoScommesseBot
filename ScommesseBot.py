@@ -19,14 +19,14 @@ with open('config/tokens.json', 'r') as fp:
 
 api = LootBotApi(tokens["LootBotApi"])
 
-
 ultimiMsg = dict()
 
 app = Client("ScommesseBot", config_file="config/config.ini")
 
-chatScommesse = [-1001415212125,"Anatras02"]
+chatScommesse = [-1001415212125, "Anatras02"]
 
 tiratore = {}
+
 
 def checkSpam(userID: int):
     try:
@@ -64,6 +64,7 @@ def codiceFunc():
         file.close()
 
     return counter
+
 
 def giocatoreRandom(utente, chatId: int):
     flag = True
@@ -135,7 +136,7 @@ def ordina(_, message):
 
 
 @app.on_message(filters.command(["dado"]) & filters.chat(chatScommesse) | filters.regex(r"^Dado 🎲$"))
-def dado(client, message):
+def dado(_, message):
     rx = r'/dado\s+(\d+)'
     mo = re.match(rx, message.text)
     if mo:
@@ -146,8 +147,10 @@ def dado(client, message):
 
         dado = aggiungiPunti(randint(1, int(mo.group(1))))
 
-        app.send_message(message.chat.id,
-                         f"@{message.from_user.username} hai appena tirato un dado a **{aggiungiPunti(int(mo.group(1)))}** facce.\nÈ uscito il numero **{str(dado)}**")
+        app.send_message(
+            message.chat.id,
+            f"@{message.from_user.username} hai appena tirato un dado a **{aggiungiPunti(int(mo.group(1)))}** facce.\nÈ uscito il numero **{str(dado)}**"
+        )
         settaScommessa(message.from_user, f"Dado {mo.group(1)}", dado)
     else:
         risultato = app.send_dice(message.chat.id, reply_to_message_id=message.message_id)
@@ -323,7 +326,9 @@ def randomGioco(_, message):
         f"@{message.from_user.username}, sei talmente indeciso da affidare a un computer la tua scelta, immetti i dati e pochi secondi dopo esce il risultato: giocherai a **{giocoScelto} {modalitàScelta}**!")
 
 
-@app.on_message(filters.command(["tira", "tira@GestoreScommesseGiochiBot", "tca"]) & filters.chat(chatScommesse) | filters.regex(r"^Tiro Con L'Arco 🏹$"))
+@app.on_message(
+    filters.command(["tira", "tira@GestoreScommesseGiochiBot", "tca"]) & filters.chat(chatScommesse) | filters.regex(
+        r"^Tiro Con L'Arco 🏹$"))
 def tira(_, message):
     utente = str(message.from_user.id)
     codice = codiceFunc()
@@ -468,7 +473,7 @@ def cheat(_, message):
 
 def getSoldi(user):
     settaUtente(user)
-    soldi = Utente.select(Utente.soldi).where(Utente.id==user.id).get().soldi
+    soldi = Utente.select(Utente.soldi).where(Utente.id == user.id).get().soldi
     return soldi
 
 
@@ -527,7 +532,6 @@ def dai(_, message):
         aggiornaSoldi(ricevente.id, soldiRicevente)
 
         message.reply(f"@{pagante.username} hai inviato **{aggiungiPunti(soldi)}$** a @{ricevente.username}")
-
 
 
 @app.on_message(filters.command("sdado"))

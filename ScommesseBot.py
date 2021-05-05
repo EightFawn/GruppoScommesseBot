@@ -9,7 +9,6 @@ import json
 import re
 from random import randint
 import operator
-import datetime
 from LootBotApi import LootBotApi
 
 from ORM.ScommesseORM import *
@@ -28,26 +27,7 @@ chatScommesse = [-1001415212125, "Anatras02"]
 tiratore = {}
 
 
-def checkSpam(userID: int):
-    try:
-        ultimiMsg[userID]
-    except KeyError:
-        ultimiMsg[userID] = dict()
-        ultimiMsg[userID] = datetime.datetime.now()
-        return False
-
-    dataOra = datetime.datetime.now()
-    dataUltimoMsg = ultimiMsg[userID]
-    diff = (dataOra - dataUltimoMsg).total_seconds()
-
-    if diff < 1:
-        return True
-    else:
-        ultimiMsg[userID] = dataOra
-        return False
-
-
-def codiceFunc():
+def codice_func():
     filename = "fileStats/counter.txt"
     if os.path.isfile(filename):
         file = open(filename, "r")
@@ -66,7 +46,7 @@ def codiceFunc():
     return counter
 
 
-def giocatoreRandom(utente, chatId: int):
+def giocatore_random(utente, chatId: int):
     flag = True
     while flag:
         try:
@@ -85,7 +65,7 @@ def giocatoreRandom(utente, chatId: int):
             return "Anatras02"
 
 
-def isUtente(utenteID: int):
+def is_utente(utenteID: int):
     query = Utente.select().where(Utente.id == utenteID)
     if (query.exists()):
         return True
@@ -93,8 +73,8 @@ def isUtente(utenteID: int):
         return False
 
 
-def settaUtente(utente, invitatoDa=None):
-    if not isUtente(utente.id):
+def setta_utente(utente, invitatoDa=None):
+    if not is_utente(utente.id):
         if invitatoDa != None:
             invitatoDa = Utente.select().where(id == invitatoDa).get()
             return Utente.create(id=utente.id, username=utente.username, invitatoDa=invitatoDa).execute()
@@ -104,12 +84,12 @@ def settaUtente(utente, invitatoDa=None):
         return Utente.update(username=utente.username).where(Utente.id == utente.id).execute()
 
 
-def settaScommessa(utente, tipoScommessa: str, risultato=None):
-    settaUtente(utente)
+def setta_scommessa(utente, tipoScommessa: str, risultato=None):
+    setta_utente(utente)
     Scommessa.create(utente=utente.id, tipo=tipoScommessa, risultato=risultato)
 
 
-def aggiungiPunti(num: int):
+def aggiungi_punti(num: int):
     return format(num, ',d').replace(",", ".")
 
 
@@ -142,23 +122,23 @@ def dado(_, message):
     if mo:
         maxFacce = 999999999
         if int(mo.group(1)) > maxFacce:
-            message.reply(f"Puoi tirare un dato di massimo {aggiungiPunti(maxFacce)} di facce!")
+            message.reply(f"Puoi tirare un dato di massimo {aggiungi_punti(maxFacce)} di facce!")
             return
 
-        dado = aggiungiPunti(randint(1, int(mo.group(1))))
+        dado = aggiungi_punti(randint(1, int(mo.group(1))))
 
         app.send_message(
             message.chat.id,
-            f"@{message.from_user.username} hai appena tirato un dado a **{aggiungiPunti(int(mo.group(1)))}** facce.\nÈ uscito il numero **{str(dado)}**"
+            f"@{message.from_user.username} hai appena tirato un dado a **{aggiungi_punti(int(mo.group(1)))}** facce.\nÈ uscito il numero **{str(dado)}**"
         )
-        settaScommessa(message.from_user, f"Dado {mo.group(1)}", dado)
+        setta_scommessa(message.from_user, f"Dado {mo.group(1)}", dado)
     else:
         risultato = app.send_dice(message.chat.id, reply_to_message_id=message.message_id)
-        settaScommessa(message.from_user, f"Dado 6", risultato.dice.value)
+        setta_scommessa(message.from_user, f"Dado 6", risultato.dice.value)
 
 
 @app.on_message(filters.command("scommesse"))
-def listaScommesse(_, message):
+def lista_scommesse(_, message):
     scommesse = Scommessa.select().join(Utente, on=Scommessa.utente == Utente.id).order_by(Scommessa.data.desc()).limit(
         15).get()
     messaggio = ""
@@ -169,7 +149,7 @@ def listaScommesse(_, message):
     message.reply(f"**Attenzione, vengono mostrate solo le ultime 15 scommesse!**\n\n{messaggio}")
 
 
-def numScommesseGioco(gioco: str):
+def numero_scommesse_gioco(gioco: str):
     return (
         Scommessa.
             select(Scommessa, fn.COUNT(Scommessa.id).alias('count')).
@@ -186,12 +166,12 @@ def stats(_, message):
     scommesse = dict()
     data = Scommessa.select().limit(1).get()
 
-    scommesse["Dado"] = numScommesseGioco("Dado")
-    scommesse["TCA"] = numScommesseGioco("Tiro Con L'Arco")
-    scommesse["ToC"] = numScommesseGioco("Testa o Croce")
-    scommesse["Carte"] = numScommesseGioco("Carte")
-    scommesse["Freccette"] = numScommesseGioco("Freccette")
-    scommesse["Rune"] = numScommesseGioco("Rune")
+    scommesse["Dado"] = numero_scommesse_gioco("Dado")
+    scommesse["TCA"] = numero_scommesse_gioco("Tiro Con L'Arco")
+    scommesse["ToC"] = numero_scommesse_gioco("Testa o Croce")
+    scommesse["Carte"] = numero_scommesse_gioco("Carte")
+    scommesse["Freccette"] = numero_scommesse_gioco("Freccette")
+    scommesse["Rune"] = numero_scommesse_gioco("Rune")
 
     messaggio = f"""Ciao **{message.from_user.username}** ecco le statistiche riguardanti le scommesse (A partire dal {data})!\nIn totale sono state giocate **{scommesseGiocate}** scommesse, divise in questa maniera:
         > Dado: {scommesse["Dado"]}
@@ -209,7 +189,7 @@ def stats(_, message):
 @app.on_message(filters.command(["freccette"]) & filters.chat(chatScommesse) | filters.regex(r"^Freccette 🎯$"))
 def freccette(_, message):
     risultato = app.send_dice(message.chat.id, "🎯", reply_to_message_id=message.message_id)
-    settaScommessa(message.from_user, f"Freccette", risultato.dice.value)
+    setta_scommessa(message.from_user, f"Freccette", risultato.dice.value)
 
 
 @app.on_message(
@@ -222,9 +202,6 @@ def carte(_, message):
     while flag:
         numero1 = random.choice(numero)
         numero2 = random.choice(numero)
-
-        utente = message.from_user.id
-
         seme1 = random.choice(seme)
         seme2 = random.choice(seme)
 
@@ -244,7 +221,7 @@ def carte(_, message):
 
     message.reply(
         f"{message.from_user.username}, mischi per bene il mazzo, improvvisamente sfili dall'alto le prime due carte, sono: {carta1} e {carta2}!")
-    settaScommessa(message.from_user, f"Carte", f"{carta1} {carta2}")
+    setta_scommessa(message.from_user, f"Carte", f"{carta1} {carta2}")
 
 
 @app.on_message(filters.command(["ToC"]) & filters.chat(chatScommesse) | filters.regex(r"^Testa o Croce 🌕$"))
@@ -254,7 +231,7 @@ def ToC(_, message):
     message.reply(
         f"{message.from_user.username}, tiri la moneta per aria, questa fa un paio di giri, torna a terra e... **E' USCITO {risultato}**!",
         quote=False)
-    settaScommessa(message.from_user, "Testa o Croce", risultato)
+    setta_scommessa(message.from_user, "Testa o Croce", risultato)
 
 
 @app.on_message(filters.command(["sorte"]) & filters.chat(chatScommesse) | filters.regex(r"^Sorte 🐉$"))
@@ -305,25 +282,25 @@ def rune(_, message):
 
     message.reply(
         f"@{message.from_user.username}, invochi il grande mago di Aci Trezza che controvoglia ti fa la rivelazione: la tua runa è {simbolo}!")
-    settaScommessa(message.from_user, "Rune", simbolo)
+    setta_scommessa(message.from_user, "Rune", simbolo)
 
 
 @app.on_message(filters.command("random") & filters.chat(chatScommesse) | filters.regex(r"^Random ❓$"))
-def randomGioco(_, message):
+def random(_, message):
     utente = message.from_user.id
 
     giochi = ["Carte", "Tiro Con L'Arco", "Freccette", "Rune", "Dado"]
-    modalità = ["BO3", "Secca"]
+    modalita = ["BO3", "Secca"]
 
     giocoScelto = random.choice(giochi)
 
     if giocoScelto == "Tiro Con L'Arco":
-        modalitàScelta = "Secca"
+        modalitaScelta = "Secca"
     else:
-        modalitàScelta = random.choice(modalità)
+        modalitaScelta = random.choice(modalita)
 
     message.reply(
-        f"@{message.from_user.username}, sei talmente indeciso da affidare a un computer la tua scelta, immetti i dati e pochi secondi dopo esce il risultato: giocherai a **{giocoScelto} {modalitàScelta}**!")
+        f"@{message.from_user.username}, sei talmente indeciso da affidare a un computer la tua scelta, immetti i dati e pochi secondi dopo esce il risultato: giocherai a **{giocoScelto} {modalitaScelta}**!")
 
 
 @app.on_message(
@@ -331,7 +308,7 @@ def randomGioco(_, message):
         r"^Tiro Con L'Arco 🏹$"))
 def tira(_, message):
     utente = str(message.from_user.id)
-    codice = codiceFunc()
+    codice = codice_func()
 
     markup = InlineKeyboardMarkup(
         [
@@ -363,7 +340,7 @@ def tira(_, message):
 
 
 @app.on_callback_query()
-def tiraQuery(_, callback_query):
+def tira_query(_, callback_query):
     if "tira" in callback_query.data:
         frasiEffetto = ["Hai lanciato una **freccia** che è andata **{punti}** metri lontana",
                         "Con una sola **freccia** sei riuscito ad uccidere ben **{punti}** uccellini in volo",
@@ -394,7 +371,7 @@ def tiraQuery(_, callback_query):
 
         numero = random.randint(1, 25)
 
-        giocatoreRandomVar = giocatoreRandom(utente, callback_query.message.chat.id)
+        giocatoreRandomVar = giocatore_random(utente, callback_query.message.chat.id)
         frase = random.choice(frasiEffetto).format(punti=numero, giocatore=giocatoreRandomVar)
 
         tiratore[tagUtente]["risultati"].append(numero)
@@ -439,7 +416,7 @@ def tiraQuery(_, callback_query):
                 f"Tiri un' ultima __freccia potentissima__ verso il cielo superando i __confini dell'universo__ che ti conferisce **{numero}** punti!\n\nBeh che dire **{giocatore}**, hai distrutto l'universo per divertirti un po' ma nel mentre hai totalizzato **{totPunti}** punti\n\n**__Questi sono stati i tuoi tiri__** {commento}\n{tiri}\n**Totale:** {totPunti}"
             )
 
-            settaScommessa(callback_query.from_user, "Tiro con l'arco", totPunti)
+            setta_scommessa(callback_query.from_user, "Tiro con l'arco", totPunti)
 
         else:
             if counter > 3:
@@ -471,13 +448,13 @@ def cheat(_, message):
                      f"Complimenti **{message.reply_to_message.from_user.username}**, i cheat sono stati attivati con successo!")
 
 
-def getSoldi(user):
-    settaUtente(user)
+def get_soldi(user):
+    setta_utente(user)
     soldi = Utente.select(Utente.soldi).where(Utente.id == user.id).get().soldi
     return soldi
 
 
-def aggiornaSoldi(userID: int, soldi: int):
+def aggiorna_soldi(userID: int, soldi: int):
     if soldi < 0:
         soldi = 0
     Utente.update(soldi=soldi).where(Utente.id == userID).execute()
@@ -485,8 +462,8 @@ def aggiornaSoldi(userID: int, soldi: int):
 
 @app.on_message(filters.command("soldi") & (filters.chat(chatScommesse) | filters.private))
 def soldi(_, message):
-    soldiVar = getSoldi(message.from_user)
-    soldi = f"{aggiungiPunti(soldiVar)}$"
+    soldiVar = get_soldi(message.from_user)
+    soldi = f"{aggiungi_punti(soldiVar)}$"
 
     message.reply(f"Soldi Gruppo Scommesse: {soldi}")
 
@@ -510,7 +487,7 @@ def dai(_, message):
                 message.reply("Non puoi pagarti da solo..")
                 return
 
-        if soldi > getSoldi(pagante):
+        if soldi > get_soldi(pagante):
             if message.from_user.username not in admin:
                 message.reply("Non hai abbastanza soldi.")
                 return
@@ -523,55 +500,55 @@ def dai(_, message):
             message.reply("Non puoi pagare così tanto, il limite è 1.000.000.000$")
             return
 
-        soldiPagante = getSoldi(pagante) - soldi
-        soldiRicevente = getSoldi(ricevente) + soldi
+        soldiPagante = get_soldi(pagante) - soldi
+        soldiRicevente = get_soldi(ricevente) + soldi
 
         if message.from_user.username not in admin:
-            aggiornaSoldi(pagante.id, soldiPagante)
+            aggiorna_soldi(pagante.id, soldiPagante)
 
-        aggiornaSoldi(ricevente.id, soldiRicevente)
+        aggiorna_soldi(ricevente.id, soldiRicevente)
 
-        message.reply(f"@{pagante.username} hai inviato **{aggiungiPunti(soldi)}$** a @{ricevente.username}")
+        message.reply(f"@{pagante.username} hai inviato **{aggiungi_punti(soldi)}$** a @{ricevente.username}")
 
 
 @app.on_message(filters.command("sdado"))
-def dadoRegolamento(_, message):
+def dato_regolamento(_, message):
     message.reply(
         "👁‍🗨 <b>Dado</b> 🎲: gioco classico.\nI due <i>(o più)</i> giocatori <b>a turno tirano il dado</b>, esce un <i>numero tra 1 e 6</i> (compresi). <b>Chi totalizza il numero più alto vince il turno</b>.<i>In alternativa</i> si può scegliere il <b>numero massimo di facce del dado</b> <u>attraverso il comando</u> \"<u>/dado</u> <b>n</b>\" dove <b>n</b> è un numero intero. (Es. \"/dado 420\" restituisce un numero compreso tra 1 e 420)\nSe non specificato <b>BO3</b>")
 
 
 @app.on_message(filters.command("stoc"))
-def regolamentoTOC(_, message):
+def regolamento_TOC(_, message):
     message.reply(
         "👁‍🗨 <b>Testa o Croce</b> 🌕: gioco classico.\nUno dei due giocatori <i>sceglie se puntare su Testa o su Croce</i>, all'avversario sarà assegnato di conseguenza l'altro.\nSempre uno dei due tira la moneta. <b>Vince il giocatore che tra i due ha scommesso su quella faccia</b>.\nSe non specificato <b>secca</b>")
 
 
 @app.on_message(filters.command("scarte"))
-def regolamentoCarte(_, message):
+def regolamento_carte(_, message):
     message.reply(
         "👁‍🗨 <b>Carte</b> 🃏: <i>Gioco semplice, simile al dado, ma con le carte</i>.\n\nDopo aver <u>eseguito il comando</u> <b>vengono estratte 2 carte a caso dal mazzo di 52</b>. Tra le due <b>si individua la migliore</b>, che va <b>contro la migliore dell'avversario</b>.\nChi ha <b>la carta più di valore tra le due vince</b>.\n<i>La scala dei numeri è come quella del Poker</i>: A, K, Q, J, 10, 9, 8, 7, 6, 5, 4, 3, 2.\n(In ordine decrescente)\n\n<i>Il valore delle carte non è dato solo dal numero, ma anche dal seme</i>:\n♥️>♦️;\n♦️>♣️;\n♣️>♠️;\ndi conseguenza ♥️ <b>è il seme migliore</b> e ♠️ <b>è il seme peggiore</b>.\n\n<b>Per esempio</b>:\nGiocatore 1 ha 3♥️ e 2♣️; Giocatore 2 ha 2♥️ e 3♦️\nVince il <b>3♥️ del Giocatore 1</b> <i>(essendo cuori più grande di fiori e quadri, gli altri due semi non vengono considerati)</i>.\n<b>Oppure:</b> se Giocatore 1 ha 2♥️ e 2♣️, mentre Giocatore 2 ha 2♦️ e 2♥️, <b>vince il Giocatore 2</b> siccome <b>quadri è più grande di fiori</b> <i>(in questo caso i cuori non si considerano, pur essendo i più grandi, perché in pareggio)</i>.\n\nC'è inoltre una <b>bassa probabilità</b> che capiti un <b>\"🃏 Jolly!\"</b>, nel caso <b>si vince al 100%</b> <i>(a meno che non esca anche all'avversario)</i>.\nSe non specificato <b>BO3</b>")
 
 
 @app.on_message(filters.command("srune"))
-def regolamentoRune(_, message):
+def regolamento_rune(_, message):
     message.reply(
         "👁‍🗨 <b>4 Rune</b> 🔮: <i>Gioco simile alle carte, ma con meno possibilità</i>.\n🌑 → <b>perde contro tutto</b>\n🔥 → <b>batte</b> 🌱\n💧 → <b>batte</b> 🔥\n🌱 → <b>batte</b> 💧\nSe non specificato <b>BO3 e sorte</b>")
 
 
 @app.on_message(filters.command("stca"))
-def regolamentoTCA(_, message):
+def regolamento_tca(_, message):
     message.reply(
         "👁‍🗨 <b>Tiro Con L'Arco</b> 🏹: <i>molto intuitivo e veloce</i>.\nI due <i>(o più)</i> giocatori, dopo aver precedentemente fatto apparire il messaggio del bot <u>utilizzando il comando o l'apposito bottone</u>, <b>tirano le tre frecce a disposizione</b>. <b>Chi totalizza il punteggio più alto vince</b>.\n<i>Il punteggio massimo ottenibile è 75 (3 tiri * 25 punti max l'uno)</i>\n<b>Si prega di non flooddare</b> <i>(premere ripetutamente in un breve lasso di tempo)</i> <b>il bottone sotto il messaggio del bot, per evitare malfunzionamenti</b>\n")
 
 
 @app.on_message(filters.command("sfreccette"))
-def regolamentoFreccette(_, message):
+def regolamento_freccette(_, message):
     message.reply(
         "👁‍🗨 <b>Freccette</b> 🎯: <i>minigioco implementato da Telegram</i>.\nI giocatori <i>a turno tirano la freccetta</i>. <b>Chi si avvicina di più al centro vince il turno</b>.\nSe non specificato <b>BO3</b>")
 
 
 @app.on_message(filters.command("invita"))
-def linkInvito(_, message):
+def link_invito(_, message):
     link = f"https://telegram.me/GestoreScommesseGiochiBot?start={str(message.from_user.id)[::-1]}"
     app.send_message(message.chat.id, f"{message.from_user.username} ecco il tuo link di invito: `{link}`")
 
@@ -595,13 +572,13 @@ def start(_, message):
         ]
     )
 
-    if not isUtente(utenteID):
+    if not is_utente(utenteID):
         try:
             utenteIDInvito = str(message.command[1])[::-1]
             try:
                 app.send_message(utenteIDInvito,
                                  f"**{message.from_user.username}** si è appena registrato con il tuo codice di invito 🥳")
-                settaUtente(message.from_user, utenteIDInvito)
+                setta_utente(message.from_user, utenteIDInvito)
             except RPCError as e:
                 print(str(e))
         except IndexError:
@@ -621,9 +598,9 @@ def nuovo(_, message):
     prezzo = "2500k"
     paga = False
 
-    if not isUtente(utenteID):
+    if not is_utente(utenteID):
         paga = True
-        settaUtente(message.from_user)
+        setta_utente(message.from_user)
     else:
         query = Utente.select().where(Utente.id == utenteID)
         if (query.exists()):
@@ -634,7 +611,7 @@ def nuovo(_, message):
         app.send_message("Anatras02", f"/paga {prezzo},{message.from_user.username}")
 
 
-def getTotStoriaPagamento(storia: [float]):
+def get_tot_storia_pagamento(storia: [float]):
     tot = 0
     max = float('-inf')
     for pagamento in storia:
@@ -654,16 +631,16 @@ def spese(_, message):
     giocatore1 = message.from_user.username
     giocatore2 = message.reply_to_message.from_user.username
     inviatiJSON = api.get_history(fromPlayer=giocatore1, toPlayer=giocatore2)
-    storia = getTotStoriaPagamento(inviatiJSON)
+    storia = get_tot_storia_pagamento(inviatiJSON)
     inviati = storia[0]
     maxInviati = storia[1]
     ricevutiJSON = api.get_history(fromPlayer=giocatore2, toPlayer=giocatore1)
-    storia = getTotStoriaPagamento(ricevutiJSON)
+    storia = get_tot_storia_pagamento(ricevutiJSON)
     ricevuti = storia[0]
     maxRicevuti = storia[1]
 
     bilancioTmp = ricevuti - inviati
-    bilancio = aggiungiPunti(bilancioTmp)
+    bilancio = aggiungi_punti(bilancioTmp)
     if (bilancioTmp > 0):
         bilancio = f"+{bilancio} 📈"
     elif bilancioTmp < 0:
@@ -678,7 +655,7 @@ def spese(_, message):
 
     totale = inviati + ricevuti
 
-    msg = f"**Storico {giocatore1} 👉 {giocatore2}**\n**Soldi inviati:** {aggiungiPunti(inviati)}\n**Soldi ricevuti:** {aggiungiPunti(ricevuti)}\n**Totale:** {aggiungiPunti(totale)}\n**Bilancio:** {bilancio}\n\n**Scommessa più alta:** {aggiungiPunti(max)}"
+    msg = f"**Storico {giocatore1} 👉 {giocatore2}**\n**Soldi inviati:** {aggiungi_punti(inviati)}\n**Soldi ricevuti:** {aggiungi_punti(ricevuti)}\n**Totale:** {aggiungi_punti(totale)}\n**Bilancio:** {bilancio}\n\n**Scommessa più alta:** {aggiungi_punti(max)}"
     app.send_message(message.chat.id, msg)
 
 

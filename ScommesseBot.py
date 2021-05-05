@@ -33,7 +33,7 @@ with open('fileStats/tiratori.json', 'r') as fp:
     tiratore = json.load(fp)
 
 
-def checkSpam(userID):
+def checkSpam(userID: int):
     try:
         ultimiMsg[userID]
     except KeyError:
@@ -69,7 +69,7 @@ def SaveJson(fileName, dictName):
         json.dump(dictName, fp, sort_keys=True, indent=4)
 
 
-def giocatoreRandom(utente, chatId):
+def giocatoreRandom(utente: object, chatId: int):
     flag = True
     while flag:
         try:
@@ -88,7 +88,7 @@ def giocatoreRandom(utente, chatId):
             return "Anatras02"
 
 
-def isUtente(utenteID):
+def isUtente(utenteID: int):
     query = Utente.select().where(Utente.id == utenteID)
     if (query.exists()):
         return True
@@ -96,7 +96,7 @@ def isUtente(utenteID):
         return False
 
 
-def settaUtente(utente, invitatoDa=None):
+def settaUtente(utente: int, invitatoDa=None):
     if not isUtente(utente.id):
         if invitatoDa != None:
             invitatoDa = Utente.select().where(id == invitatoDa).get()
@@ -107,7 +107,7 @@ def settaUtente(utente, invitatoDa=None):
         return Utente.update(username=utente.username).where(Utente.id == utente.id).execute()
 
 
-def settaScommessa(utente, tipoScommessa, risultato=None):
+def settaScommessa(utente: object, tipoScommessa: str, risultato=None):
     settaUtente(utente)
     Scommessa.create(utente=utente.id, tipo=tipoScommessa, risultato=risultato)
 
@@ -474,7 +474,7 @@ def getSoldi(user):
     return soldi
 
 
-def aggiornaSoldi(userID, soldi):
+def aggiornaSoldi(userID: int, soldi: int):
     if soldi < 0:
         soldi = 0
     Utente.update(soldi=soldi).where(Utente.id == userID).execute()
@@ -704,7 +704,7 @@ def nuovo(_, message):
         app.send_message("Anatras02", f"/paga {prezzo},{message.from_user.username}")
 
 
-def getTotStoriaPagamento(storia):
+def getTotStoriaPagamento(storia: [float]):
     tot = 0
     max = float('-inf')
     for pagamento in storia:

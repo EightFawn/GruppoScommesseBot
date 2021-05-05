@@ -1,3 +1,5 @@
+import os
+
 from pyrogram import Client, filters
 from pyrogram.types import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
 from pyrogram.errors import RPCError
@@ -47,13 +49,20 @@ def checkSpam(userID: int):
 
 def codiceFunc():
     filename = "fileStats/counter.txt"
-    file = open(filename, "r")
-    counter = int(file.readline())
-    file.close()
-    file = open(filename, "w")
-    counter += 1
-    file.write(str(counter))
-    file.close()
+    if os.path.isfile(filename):
+        file = open(filename, "r")
+        counter = int(file.readline())
+        file.close()
+        file = open(filename, "w")
+        counter += 1
+        file.write(str(counter))
+        file.close()
+    else:
+        file = open(filename, "w+")
+        counter = 1
+        file.write(str(counter))
+        file.close()
+
     return counter
 
 

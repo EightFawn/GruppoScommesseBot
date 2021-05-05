@@ -367,7 +367,11 @@ def tiraQuery(_, callback_query):
 
         codice = callback_query.data.split("|")[2]
         utente = int(callback_query.data.split("|")[1])
-        tiratore[f"{utente}{codice}"]["countSpam"] += 1
+        try:
+            tiratore[f"{utente}{codice}"]["countSpam"] += 1
+        except KeyError:
+            callback_query.answer("Il bot è stato riavviato mentre giocavi, rilancia il comando /tca")
+            return
 
         if tiratore[f"{utente}{codice}"]["countSpam"] >= 2:
             callback_query.answer("Non spammare..")

@@ -4,4 +4,5 @@ config.ini
 .db
 tokens.json
 .idea
+counter.txt
 

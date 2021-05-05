@@ -7,9 +7,6 @@ import json
 import re
 from random import randint
 import operator
-import slotmachine
-import threading
-import faulthandler
 import datetime
 from LootBotApi import LootBotApi
 
@@ -20,8 +17,6 @@ with open('config/tokens.json', 'r') as fp:
 
 api = LootBotApi(tokens["LootBotApi"])
 
-faulthandler.enable()
-lock = threading.Lock()
 
 ultimiMsg = dict()
 
@@ -29,9 +24,7 @@ app = Client("ScommesseBot", config_file="config/config.ini")
 
 chatScommesse = [-1001415212125,"Anatras02"]
 
-with open('fileStats/tiratori.json', 'r') as fp:
-    tiratore = json.load(fp)
-
+tiratore = {}
 
 def checkSpam(userID: int):
     try:
@@ -354,7 +347,6 @@ def tira(_, message):
     tiratore[f"{utente}{codice}"]["risultati"] = []
     tiratore[f"{utente}{codice}"]["countSpam"] = 0
 
-    SaveJson("fileStats/tiratori.json", tiratore)
     message.reply(
         f"{message.from_user.first_name} clicca qui sotto per iniziare a tirare",
         reply_markup=markup,
@@ -451,7 +443,6 @@ def tiraQuery(_, callback_query):
         tiratore[tagUtente]["tiro"] += 1
         tiratore[f"{utente}{codice}"]["countSpam"] = 0
 
-        SaveJson("fileStats/tiratori.json", tiratore)
     elif "Cancella" in callback_query.data:
         utente = callback_query.data.split("|")[1]
 
@@ -530,78 +521,6 @@ def dai(_, message):
 
         message.reply(f"@{pagante.username} hai inviato **{aggiungiPunti(soldi)}$** a @{ricevente.username}")
 
-
-def randomSlot():
-    messaggio = ""
-    slotM = slotmachine.SlotMachine(size=(3, 1), jack='💎')
-    slotM.reel = ["🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🍈", "🍒", "🍑", "🥭", "🥥", "🥝", "🍰", "🍫",
-                  "🍦", "🍬", "🍩", "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🍈", "🍒", "🍑", "🥭", "🥥",
-                  "🥝", "🍰", "🍫", "🍦", "🍬", "🍩", "💎"]
-    r = slotM()
-    for riga in r:
-        messaggio += "\n"
-        for elemento in riga:
-            messaggio += f"{elemento}|"
-
-    return [messaggio, slotM.checkLine(r[0]), r]
-
-
-@app.on_message(filters.command("slot") & (filters.chat(-498961046) | filters.private))
-def slot(_, message):
-    if checkSpam(message.from_user.id):
-        message.reply("Non spammare troppi comandi..")
-        return
-
-    user = message.from_user
-    userID = user.id
-    soldi = getSoldi(user)
-
-    prezzo = 30000
-    if soldi < prezzo:
-        message.reply(f"Non hai abbastanza soldi, servono minimo {aggiungiPunti(prezzo)}$")
-        return
-
-    aggiornaSoldi(userID, soldi - prezzo)
-    soldi = getSoldi(user)
-
-    """
-    messaggio = message.reply(f"Buonafortuna 😃!\n{randomSlot()[0]}")
-    time.sleep(0.2)
-
-    for i in range(random.randint(3,6)):
-        time.sleep(0.2)
-        messaggio.edit(f"Buonafortuna 😃!\n{randomSlot()[0]}")
-
-    for i in range(random.randint(1,3)):
-        time.sleep(0.5)
-        messaggio.edit(f"Buonafortuna 😃!\n{randomSlot()[0]}")
-    """
-
-    slot = randomSlot()
-    risultato = slot[1]
-    msg = slot[0]
-    r = slot[2]
-
-    if risultato == False:
-        if r[0][0] == r[0][1] or r[0][1] == r[0][2]:
-            risultato = 80000
-            aggiornaSoldi(userID, soldi + risultato)
-        else:
-            risultato = "Hai perso, ritenta!"
-    else:
-        if risultato == "jackpot":
-            risultato = 100000000
-            app.send_message(-498961046, "JACKPOT")
-        else:
-            app.send_message(-498961046, "3 cosi uguali")
-            risultato *= 500000
-
-        aggiornaSoldi(userID, soldi + risultato)
-
-    if risultato != "Hai perso, ritenta!":
-        risultato = f"Complimenti, hai vinto {aggiungiPunti(risultato)}$"
-
-    message.reply(f"Buonafortuna 😃!\n{msg}\n\n{risultato}")
 
 
 @app.on_message(filters.command("sdado"))

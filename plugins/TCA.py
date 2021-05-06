@@ -23,7 +23,6 @@ def tira(_, message):
     tiratori[f"{utente}{codice}"] = dict()
     tiratori[f"{utente}{codice}"]["tiro"] = 1
     tiratori[f"{utente}{codice}"]["risultati"] = []
-    tiratori[f"{utente}{codice}"]["countSpam"] = 0
 
     message.reply(
         f"{message.from_user.first_name} clicca qui sotto per iniziare a tirare",
@@ -61,22 +60,18 @@ def tira_query(app, callback_query):
 
         codice = callback_query.data.split("|")[2]
         utente = int(callback_query.data.split("|")[1])
+        tag_utente = f"{utente}{codice}"
         try:
-            tiratori[f"{utente}{codice}"]["countSpam"] += 1
+            tiratori[tag_utente]
         except KeyError:
             callback_query.answer("Il bot è stato riavviato mentre giocavi, rilancia il comando /tca")
             return
 
-        if tiratori[f"{utente}{codice}"]["countSpam"] >= 2:
-            callback_query.answer("Non spammare..")
-            tiratori[f"{utente}{codice}"]["countSpam"] = 0
-            return
 
         if callback_query.from_user.id != utente:
             callback_query.answer("Eh, volevi!")
             return
 
-        tag_utente = f"{utente}{codice}"
 
         numero = random.randint(1, 25)
 
@@ -137,7 +132,6 @@ def tira_query(app, callback_query):
                 )
 
         tiratori[tag_utente]["tiro"] += 1
-        tiratori[f"{utente}{codice}"]["countSpam"] = 0
 
     elif "Cancella" in callback_query.data:
         utente = callback_query.data.split("|")[1]

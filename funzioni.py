@@ -55,11 +55,11 @@ def setta_utente(utente, invitato_da=None):
     if not is_utente(utente.id):
         if invitato_da is not None:
             invitato_da = Utente.select().where(id == invitato_da).get()
-            return Utente.create(id=utente.id, username=utente.username, invitatoDa=invitato_da).execute()
+            return Utente.create(id=utente.id, username=utente.username, invitatoDa=invitato_da)
         else:
-            return Utente.create(id=utente.id, username=utente.username).execute()
+            return Utente.create(id=utente.id, username=utente.username)
     else:
-        return Utente.update(username=utente.username).where(Utente.id == utente.id).execute()
+        return Utente.update(username=utente.username).where(Utente.id == utente.id)
 
 
 def setta_scommessa(utente, tipo_scommessa: str, risultato=None):

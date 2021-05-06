@@ -17,6 +17,7 @@ def codice_func():
         file.write(str(counter))
         file.close()
     else:
+        os.mkdir("fileStats")
         file = open(filename, "w+")
         counter = 1
         file.write(str(counter))

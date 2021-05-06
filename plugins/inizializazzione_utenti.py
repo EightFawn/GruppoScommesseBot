@@ -1,22 +1,21 @@
 from pykeyboard import InlineKeyboard
-from pyrogram import filters
+from pyrogram import Client, filters
 from pyrogram.errors import RPCError
 from pyrogram.types import InlineKeyboardButton
 
 from ORM.ScommesseORM import Utente
-from ScommesseBot import app
 from config.variabili import chatScommesse
 from funzioni import is_utente, setta_utente
 
 
-@app.on_message(filters.command("invita"))
-def link_invito(_, message):
+@Client.on_message(filters.command("invita"))
+def link_invito(app, message):
     link = f"https://telegram.me/GestoreScommesseGiochiBot?start={str(message.from_user.id)[::-1]}"
     app.send_message(message.chat.id, f"{message.from_user.username} ecco il tuo link di invito: `{link}`")
 
 
-@app.on_message(filters.command("start"))
-def start(_, message):
+@Client.on_message(filters.command("start"))
+def start(app, message):
     utente_id = message.from_user.id
 
     link = app.get_chat(chatScommesse).invite_link
@@ -55,8 +54,8 @@ def start(_, message):
         )
 
 
-@app.on_message(filters.chat(chatScommesse) & filters.new_chat_members)
-def nuovo(_, message):
+@Client.on_message(filters.chat(chatScommesse) & filters.new_chat_members)
+def nuovo(app, message):
     utente_id = message.from_user.id
     prezzo = "2500k"
     paga = False

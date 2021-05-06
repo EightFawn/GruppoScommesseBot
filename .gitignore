@@ -6,4 +6,4 @@ tokens.json
 .idea
 counter.txt
 __pycache__
-
+/ScommesseBot.session-journal

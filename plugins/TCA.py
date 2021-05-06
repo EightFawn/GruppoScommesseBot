@@ -1,5 +1,6 @@
+from pykeyboard import InlineKeyboard
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton
 
 from config.variabili import chatScommesse, tiratori
 from funzioni import *
@@ -13,21 +14,10 @@ def tira(_, message):
     utente = str(message.from_user.id)
     codice = codice_func()
 
-    markup = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    "Tira 🏹",
-                    callback_data="tira|{}|{}".format(utente, codice)
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "Cancella Tiro ❌",
-                    callback_data="Cancella|{}|{}".format(utente, codice)
-                )
-            ]
-        ]
+    keyboard = InlineKeyboard(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Tira 🏹", callback_data=f"tira|{utente}|{codice}"),
+        InlineKeyboardButton("Cancella Tiro ❌", callback_data=f"Cancella|{utente}|{codice}")
     )
 
     tiratori[f"{utente}{codice}"] = dict()
@@ -37,7 +27,7 @@ def tira(_, message):
 
     message.reply(
         f"{message.from_user.first_name} clicca qui sotto per iniziare a tirare",
-        reply_markup=markup,
+        reply_markup=keyboard,
         quote=False
     )
 
@@ -95,15 +85,9 @@ def tira_query(app, callback_query):
 
         tiratori[tag_utente]["risultati"].append(numero)
 
-        markup = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Tira 🏹",
-                        callback_data="tira|{}|{}".format(utente, codice)
-                    )
-                ],
-            ]
+        keyboard = InlineKeyboard(row_width=1)
+        keyboard.add(
+            InlineKeyboardButton("Tira 🏹", callback_data=f"tira|{utente}|{codice}")
         )
 
         counter = 1
@@ -149,7 +133,7 @@ def tira_query(app, callback_query):
             else:
                 callback_query.edit_message_text(
                     f"{frase}\n\n{tiri}",
-                    reply_markup=markup
+                    reply_markup=keyboard
                 )
 
         tiratori[tag_utente]["tiro"] += 1

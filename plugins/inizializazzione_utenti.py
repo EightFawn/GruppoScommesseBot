@@ -18,9 +18,9 @@ def link_invito(app, message):
 def start(app, message):
     utente_id = message.from_user.id
 
-    link = app.get_chat(chatScommesse).invite_link
+    link = app.get_chat(chatScommesse[0]).invite_link
     if link is None:
-        link = app.export_chat_invite_link(chatScommesse)
+        link = app.export_chat_invite_link(chatScommesse[0])
 
     keyboard = InlineKeyboard(row_width=1)
     keyboard.add(

@@ -121,13 +121,13 @@ def sacchi(client, message):
         else:
             num_max = int(mo.group(1))
     num_attuale = 0
-    num_click = 0
     giocatore = message.from_user.username
     codice = codice_func()
     tiratori[f"{giocatore}{codice}"] = dict()
     tiratori[f"{giocatore}{codice}"]["ora_inizio"] = datetime.datetime.now().strftime("%d/%m/%Y,%H:%M:%S:%f")
     tiratori[f"{giocatore}{codice}"]["risultati"] = []
-    callback_data = f"premi|{giocatore}|{codice}|{num_attuale}|{num_max}|{num_click}"
+    tiratori[f"{giocatore}{codice}"]["num_click"] = 0
+    callback_data = f"premi|{giocatore}|{codice}|{num_attuale}|{num_max}"
 
     bottone = [[InlineKeyboardButton("premi", callback_data = callback_data)]]
     tastiera = InlineKeyboardMarkup(bottone)
@@ -141,7 +141,7 @@ def premi(app, callback_query):
     codice = data.split("|")[2]
     num_attuale = int(data.split("|")[3])
     num_max = data.split("|")[4]
-    num_click = int(data.split("|")[5]) + 1
+    num_click = tiratori[f"{giocatore}{codice}"]["num_click"] + 1
 
     numero = 1
     tag_utente = f"{giocatore}{codice}"
@@ -151,6 +151,7 @@ def premi(app, callback_query):
         callback_query.answer("Il bot è stato riavviato mentre giocavi, rilancia il comando /tca")
         return
     tiratori[tag_utente]["risultati"].append(numero)
+    tiratori[f"{giocatore}{codice}"]["num_click"] = num_click
     ora_ultimo_update = datetime.datetime.strptime(tiratori[tag_utente]["ora_inizio"], "%d/%m/%Y,%H:%M:%S:%f")
     attesa_aggiornamento = datetime.timedelta(seconds = 3)
     
@@ -163,7 +164,7 @@ def premi(app, callback_query):
         sim_arrivo = "🏁"
         percorso = genera_mappa(num_prossimo, num_max)
         if sim_arrivo in percorso:
-            callback_data = f"premi|{giocatore}|{codice}|{num_prossimo}|{num_max}|{num_click}"
+            callback_data = f"premi|{giocatore}|{codice}|{num_prossimo}|{num_max}"
             bottone = [[InlineKeyboardButton("premi", callback_data = callback_data)]]
             tastiera = InlineKeyboardMarkup(bottone)
             callback_query.edit_message_text(text = f"{percorso}", reply_markup = tastiera)

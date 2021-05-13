@@ -18,10 +18,11 @@ def genera_mappa(num_attuale, num_max):
     if num_attuale >= num_max - 1:
         arrivo = ""
         num_attuale = num_max -1
+    if num_attuale < 0:
+        num_attuale = 0
     caselle_percorse = casella * num_attuale
     caselle_rimanenti = casella * (num_max - num_attuale - 2)
     percorso = caselle_percorse + giocatore + caselle_rimanenti + arrivo
-    print(arrivo)
     mappa = ""
     peso = 20
     casella_corrente = 0
@@ -142,6 +143,10 @@ def premi(app, callback_query):
     num_attuale = int(data.split("|")[3])
     num_max = data.split("|")[4]
     num_click = tiratori[f"{giocatore}{codice}"]["num_click"] + 1
+
+    if callback_query.from_user.username != giocatore:
+            callback_query.answer("Eh, volevi!")
+            return
 
     numero = 1
     tag_utente = f"{giocatore}{codice}"

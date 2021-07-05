@@ -8,6 +8,7 @@ from config.variabili import chatScommesse, tiratori
 from funzioni import giocatore_random, setta_scommessa, codice_func
 
 comandi = ["sacchi", "sacchi@GestoreScommesseGiochiBot"]
+tiratori["cooldown"] = dict()
 
 def genera_mappa(num_attuale, num_max):
     casella = "⬛️"
@@ -106,8 +107,10 @@ def sacchi(client, message):
     tiratori[f"{giocatore}{codice}"] = dict()
     tiratori[f"{giocatore}{codice}"]["ora_inizio"] = datetime.datetime.now().strftime("%d/%m/%Y,%H:%M:%S:%f")
     tiratori[f"{giocatore}{codice}"]["risultati"] = []
+    tiratori[f"{giocatore}{codice}"]["fine"] = False
     tiratori[f"{giocatore}{codice}"]["num_click"] = 0
     tiratori[f"{giocatore}{codice}"]["durata_fw"] = 0
+    tiratori["cooldown"][f"{giocatore}{codice}"] = datetime.datetime.now()
     callback_data = f"premi|{giocatore}|{codice}|{num_attuale}|{num_max}"
 
     bottone = [[InlineKeyboardButton("premi", callback_data = callback_data)]]
@@ -129,25 +132,38 @@ def premi(app, callback_query):
         callback_query.answer("Eh, volevi!")
         return
 
+    if tiratori[f"{giocatore}{codice}"]["fine"] == True:
+        return
+    
+    if (datetime.datetime.now() - tiratori["cooldown"][f"{giocatore}{codice}"]) < datetime.timedelta(milliseconds = 250):
+        print("return 250")
+        return
+    else:
+        tiratori["cooldown"][f"{giocatore}{codice}"] = datetime.datetime.now()
+
     numero = 1
     tag_utente = f"{giocatore}{codice}"
     try:
         tiratori[tag_utente]
     except KeyError:
-        callback_query.answer("Il bot è stato riavviato mentre giocavi, rilancia il comando /tca")
+        callback_query.answer("Il bot è stato riavviato mentre giocavi, rilancia il comando /sacchi")
         return
 
     if tiratori[f"{giocatore}{codice}"]["durata_fw"] == 0 or datetime.datetime.now() > tiratori[f"{giocatore}{codice}"]["durata_fw"]:
         print(f'"durata_fw {tiratori[f"{giocatore}{codice}"]["durata_fw"]}')
         try:
+            print(f"num_attuale: {num_attuale}")
             num_prossimo = 0
             sim_arrivo = "🏁"
+            print(f'len prima {tiratori[tag_utente]["risultati"]}')
             if len(tiratori[tag_utente]["risultati"]) == 0:
                 num_prossimo = num_attuale + numero
             else:
                 spostamento = sum(tiratori[tag_utente]["risultati"])
-                num_prossimo = num_attuale + spostamento + numero
-                tiratori[f"{giocatore}{codice}"]["risultati"].clear()    
+                num_prossimo = num_attuale + spostamento
+                if num_prossimo < (int(num_max) - 1):
+                    num_prossimo = num_prossimo + numero
+            print(f"num_prossimo: {num_prossimo}")    
             percorso = genera_mappa(num_prossimo, num_max)
             if sim_arrivo in percorso:
                 callback_data = f"premi|{giocatore}|{codice}|{num_prossimo}|{num_max}"
@@ -160,14 +176,17 @@ def premi(app, callback_query):
                     return
                 else:
                     callback_query.edit_message_text(text = f"{percorso}", reply_markup = tastiera)
-                tiratori[f"{giocatore}{codice}"]["num_click"] = num_click + 1
-                callback_query.answer()
+                    tiratori[f"{giocatore}{codice}"]["num_click"] = num_click + 1
+                    print(f'num click {tiratori[f"{giocatore}{codice}"]["num_click"]}')
+                    callback_query.answer()
             else:
+                print("finitooo")
                 callback_query.edit_message_text(text = f"{percorso}\n\nHai finito il percorso in {num_click + 1} click.")
+                tiratori[f"{giocatore}{codice}"]["fine"] = True
                 callback_query.answer()
         except FloodWait as fw:
+            print("\n\n\n\n")
             print(f"fw {fw}")
-            #app.send_message(chat_id, "Anti flood")
             rx = r'[0-9]+'
             mo = re.findall(rx, str(fw))
             print(f"mo {mo}")
@@ -180,28 +199,38 @@ def premi(app, callback_query):
                 print(f"ora fine {ora_fine}")
                 tiratori[f"{giocatore}{codice}"]["durata_fw"] = ora_fine
                 
-                tiratori[tag_utente]["risultati"].append(numero)
-            
+                print(f'"durata_fw {tiratori[f"{giocatore}{codice}"]["durata_fw"]}')
+                print(f"num_attuale: {num_attuale}")
+                print(f'len prima {tiratori[tag_utente]["risultati"]}')
                 spostamento = sum(tiratori[tag_utente]["risultati"])
                 num_prossimo = num_attuale + spostamento
-                print(f"num prossimo {num_prossimo}")
                 if num_prossimo >= (int(num_max) - 1):
-                    tiratori[tag_utente]["risultati"].pop()
-                    callback_query.answer(f"@{giocatore} hai finito il percorso in {num_click} click.")
+                    print("finitooo")
+                    print(f'num click {tiratori[f"{giocatore}{codice}"]["num_click"]}')
+                    callback_query.answer(f"@{giocatore} hai finito il percorso in {num_click + 1} click.")
                     return
+                tiratori[tag_utente]["risultati"].append(numero)
+                num_prossimo = num_attuale + spostamento + numero
                 tiratori[f"{giocatore}{codice}"]["num_click"] = num_click + 1
+                print(f'num click {tiratori[f"{giocatore}{codice}"]["num_click"]}')
+                print(f"num prossimo {num_prossimo}")
                 callback_query.answer()
             else:
                 callback_query.answer("C'è stato un problema con il floodwait, contatta gli admin e aspetta la sua fine.")
     else:
         print(f'"durata_fw {tiratori[f"{giocatore}{codice}"]["durata_fw"]}')
-        tiratori[tag_utente]["risultati"].append(numero)
+        print(f"num_attuale: {num_attuale}")
+        print(f'len prima {tiratori[tag_utente]["risultati"]}')
         spostamento = sum(tiratori[tag_utente]["risultati"])
         num_prossimo = num_attuale + spostamento
-        print(f"num prossimo {num_prossimo}")
         if num_prossimo >= (int(num_max) - 1):
-            tiratori[tag_utente]["risultati"].pop()
-            callback_query.answer(f"@{giocatore} hai finito il percorso in {num_click} click.")
+            print("finitooo")
+            print(f'num click {tiratori[f"{giocatore}{codice}"]["num_click"]}')
+            callback_query.answer(f"@{giocatore} hai finito il percorso in {num_click + 1} click.")
             return
+        tiratori[tag_utente]["risultati"].append(numero)
+        num_prossimo = num_attuale + spostamento + numero
         tiratori[f"{giocatore}{codice}"]["num_click"] = num_click + 1
+        print(f'num click {tiratori[f"{giocatore}{codice}"]["num_click"]}')
+        print(f"num prossimo {num_prossimo}")
         callback_query.answer()

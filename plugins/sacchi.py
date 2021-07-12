@@ -12,81 +12,73 @@ tiratori["cooldown"] = dict()
 
 def genera_mappa(num_attuale, num_max):
     casella = "⬛️"
-    muri  = "⬜️" 
-    giocatore = "💰"
-    arrivo = "🏁" 
+    muri  = "⬜️"
+    giocatore = "❤️"
+    arrivo = "🏁"
     num_attuale = int(num_attuale)
     num_max = int(num_max)
+    fine_mappa = False
     if num_attuale >= num_max - 1:
         arrivo = ""
         num_attuale = num_max -1
+        fine_mappa = True
     if num_attuale < 0:
         num_attuale = 0
     caselle_percorse = casella * num_attuale
     caselle_rimanenti = casella * (num_max - num_attuale - 2)
-    percorso = caselle_percorse + giocatore + caselle_rimanenti + arrivo
+    percorso = caselle_percorse + giocatore + caselle_rimanenti
+    #mappa = percorso[:int(num_attuale)] + giocatore + percorso[int(num_attuale)+2:len(percorso)-2] + arrivo
     mappa = ""
-    peso = 20
     casella_corrente = 0
     stato = 0
     finito = False
     while finito == False:
         if stato == 0:
-            if giocatore in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if "🏁" in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if len(percorso) < (casella_corrente + peso):
-                rimanenti = ((casella_corrente + peso) - len(percorso)) / 2
-                mappa += percorso[casella_corrente:len(percorso)] + muri * int(rimanenti)
+            if len(percorso) < (casella_corrente + 20):
+                mappa += percorso[casella_corrente:len(percorso)]
                 finito = True
+                #return mappa
             else:
-                mappa += percorso[casella_corrente:(casella_corrente + peso)] + "\n"
-                casella_corrente += peso
-            peso = 2
+                mappa += percorso[casella_corrente:(casella_corrente + 20)] + "\n"
+                casella_corrente += 20
             stato += 1
         elif stato == 1:
-            if giocatore in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if "🏁" in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if len(percorso) < (casella_corrente + peso):
+            if len(percorso) < (casella_corrente + 2):
+                if fine_mappa == False:
+                    mappa += muri * 9
                 finito = True
+                #return mappa
             else:
-                mappa += (muri * 9) + percorso[casella_corrente:casella_corrente + peso] + "\n"
-                casella_corrente += peso
-                if casella_corrente + peso == len(percorso):
-                    finito = True
-            peso = 20
+                mappa += (muri * 9) + percorso[casella_corrente:casella_corrente + 2] + "\n"
+                casella_corrente += 2
             stato += 1
         elif stato == 2:
-            if giocatore in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if "🏁" in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if len(percorso) < (casella_corrente + peso):
-                rimanenti = ((casella_corrente + peso) - len(percorso)) / 2
-                mappa += muri * int(rimanenti) + percorso[casella_corrente:len(percorso)][::-1]
+            if len(percorso) < (casella_corrente + 20):
+                rimanenti = 9 - (len(percorso) - casella_corrente) / 2
+                if rimanenti < 9:
+                    mappa += (muri * int(rimanenti)) + arrivo + percorso[casella_corrente:len(percorso)][::-1]
+                    arrivo = ""
+                else:
+                    if fine_mappa == False:
+                        mappa += muri * 9
                 finito = True
+                #return mappa
             else:
-                mappa += percorso[casella_corrente:(casella_corrente + peso)][::-1] + "\n"
-                casella_corrente += peso
-            peso = 2
+                mappa += percorso[casella_corrente:(casella_corrente + 20)][::-1] + "\n"
+                casella_corrente += 20
             stato += 1
         elif stato == 3:
-            if giocatore in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if "🏁" in percorso[casella_corrente:casella_corrente + peso]:
-                peso -= 1
-            if len(percorso) < (casella_corrente + peso):
+            if len(percorso) < (casella_corrente + 2):
                 finito = True
+                #return mappa
             else:
-                mappa += percorso[casella_corrente:(casella_corrente + peso)] + muri * 9 + "\n"
-                casella_corrente += peso
-                if casella_corrente == len(percorso):
-                    finito = True
-            peso = 20
+                mappa += percorso[casella_corrente:(casella_corrente + 2)] + muri * 9 + "\n"
+                casella_corrente += 2
             stato = 0
+    #mappa = (percorso[:10] + "\n" + muri * 9 + percorso[10:11] + "\n"
+    #        + percorso[11:21][::-1] + "\n"+ percorso[21:22] + muri * 9 + "\n")
+    #mappa = mappa.replace(giocatore, "💰")
+    mappa += arrivo
     return mappa
 
 @Client.on_message(filters.command("sacchi")) # | filters.regex(r"^Corsa con i sacchi$")) #& filters.chat(chatScommesse)
